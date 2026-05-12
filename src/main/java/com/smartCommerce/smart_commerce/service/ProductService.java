@@ -3,7 +3,8 @@ package com.smartCommerce.smart_commerce.service;
 import java.util.List;
 
 import com.smartCommerce.smart_commerce.dto.request.ProductRequest;
-import com.smartCommerce.smart_commerce.dto.respone.ProductResponse;
+import com.smartCommerce.smart_commerce.dto.request.StockUpdateRequest;
+import com.smartCommerce.smart_commerce.dto.response.ProductResponse;
 
 public interface ProductService {
 
@@ -14,4 +15,5 @@ public interface ProductService {
 	List<ProductResponse> searchProduct(String name);
 	ProductResponse updateProduct(String id, ProductRequest productRequest);
 	void deleteProduct(String id);
+	ProductResponse updateStock(String id, StockUpdateRequest stockUpdaterequest);
 }

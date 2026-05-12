@@ -1,4 +1,4 @@
-package com.smartCommerce.smart_commerce.dto.respone;
+package com.smartCommerce.smart_commerce.dto.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

@@ -52,4 +52,25 @@ public class GlobalExceptionHandler {
                 .build();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
+	@ExceptionHandler(UserNotFoundException.class)
+	public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex) {
+	    ErrorResponse error = ErrorResponse.builder()
+	            .timeStamp(LocalDateTime.now())
+	            .status(HttpStatus.NOT_FOUND.value())
+	            .error("Not Found")
+	            .message(ex.getMessage())
+	            .build();
+	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+	}
+
+	@ExceptionHandler(DuplicateEmailException.class)
+	public ResponseEntity<ErrorResponse> handleDuplicateEmail(DuplicateEmailException ex) {
+	    ErrorResponse error = ErrorResponse.builder()
+	            .timeStamp(LocalDateTime.now())
+	            .status(HttpStatus.CONFLICT.value())   // 409 Conflict
+	            .error("Conflict")
+	            .message(ex.getMessage())
+	            .build();
+	    return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+	}
 }

@@ -7,7 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.smartCommerce.smart_commerce.dto.request.ProductRequest;
-import com.smartCommerce.smart_commerce.dto.respone.ProductResponse;
+import com.smartCommerce.smart_commerce.dto.request.StockUpdateRequest;
+import com.smartCommerce.smart_commerce.dto.response.ProductResponse;
 import com.smartCommerce.smart_commerce.exception.ProductNotFoundException;
 import com.smartCommerce.smart_commerce.model.Product;
 import com.smartCommerce.smart_commerce.repository.ProductRepository;
@@ -121,6 +122,13 @@ public class ProductServiceImpl implements ProductService {
 				.description(product.getDescription()).price(product.getPrice()).category(product.getCategory())
 				.stockQuantity(product.getStockQuantity()).imageUrls(product.getImageUrls()).active(product.getActive())
 				.createdAt(product.getCreatedAt()).updatedAt(product.getUpdatedAt()).build();
+	}
+
+	@Override
+	public ProductResponse updateStock(String id, StockUpdateRequest stockUpdaterequest) {
+		Product product = productRepository.findById(id).orElseThrow(()->new ProductNotFoundException(id));
+		product.setStockQuantity(stockUpdaterequest.getQuantity());
+		return mapToResponse(productRepository.save(product));
 	}
 
 }
