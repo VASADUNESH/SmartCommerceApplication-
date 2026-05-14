@@ -41,6 +41,8 @@ public class User {
 
 	private LocalDateTime updatedAt;
 	
+	private String Password;
+	
 	
 	@Data
 	@Builder

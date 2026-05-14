@@ -9,6 +9,7 @@ import com.smartCommerce.smart_commerce.dto.request.UserRequest;
 import com.smartCommerce.smart_commerce.dto.response.UserResponse;
 import com.smartCommerce.smart_commerce.exception.DuplicateEmailException;
 import com.smartCommerce.smart_commerce.exception.UserNotFoundException;
+import com.smartCommerce.smart_commerce.mapper.UserMapper;
 import com.smartCommerce.smart_commerce.model.User;
 import com.smartCommerce.smart_commerce.model.enums.UserRoles;
 import com.smartCommerce.smart_commerce.repository.UserRepository;
@@ -24,27 +25,20 @@ import lombok.extern.slf4j.Slf4j;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    
+    private final UserMapper userMapper;
 
     @Override
     public UserResponse registerUser(@Valid UserRequest userRequest) {
 
         log.info("Registering a new user with email: {}", userRequest.getEmail());
 
-        User user = User.builder()
-                .firstName(userRequest.getFirstName())
-                .lastName(userRequest.getLastName())
-                .email(userRequest.getEmail())
-                .phone(userRequest.getPhone())
-                .role(UserRoles.CUSTOMER)
-                .address(mapToAddress(userRequest.getAddress())) 
-                .active(true)
-                .build();
+        User user = userMapper.toEntity(userRequest);
 
-        User savedUser = userRepository.save(user);
 
-        log.info("User registered with id: {}", savedUser.getId());
+        log.info("User registered ");
 
-        return mapToResponse(savedUser);
+        return userMapper.toResponse(userRepository.save(user));
     }
 
     
@@ -140,17 +134,11 @@ public class UserServiceImpl implements UserService {
         }
 		
 		
-		User user = existingUser.builder()
-			.firstName(userRequest.getFirstName())
-			.lastName(userRequest.getLastName())
-			.email(userRequest.getEmail())
-			.phone(userRequest.getPhone())
-			.address(mapToAddress(userRequest.getAddress()))
-			.build();
+		userMapper.updateEntity(userRequest, existingUser);
 		
 		
 		
-		return mapToResponse(userRepository.save(user));
+		return userMapper.toResponse(userRepository.save(existingUser));
 	}
 
 

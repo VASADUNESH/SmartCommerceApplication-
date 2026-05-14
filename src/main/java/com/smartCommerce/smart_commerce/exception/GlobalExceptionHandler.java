@@ -1,76 +1,70 @@
 package com.smartCommerce.smart_commerce.exception;
-
-import java.time.LocalDateTime;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
+
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.smartCommerce.smart_commerce.dto.response.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
+
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
-	@ExceptionHandler(ProductNotFoundException.class)
-	public ResponseEntity<ErrorResponse> handleProductNotFound(ProductNotFoundException ex) {
-		ErrorResponse error = ErrorResponse.builder().timeStamp(LocalDateTime.now())
-				.status(HttpStatus.NOT_FOUND.value()).error("Not Found").message(ex.getMessage()).build();
+//    private final UserMapperImpl userMapperImpl;
+//
+//    private final UserRepository userRepository;
 
-		
-		return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+	@ExceptionHandler(ProductNotFoundException.class)
+	public ResponseEntity<ApiResponse<Void>> handleProductNotFound(ProductNotFoundException ex) {
+		log.warn("Product not found: {} "+ex.getMessage());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage(),404));
 	}
 	
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex) {
-        Map<String, String> fieldErrors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach(error -> {
-            String fieldName = ((FieldError) error).getField();
-            String message = error.getDefaultMessage();
-            fieldErrors.put(fieldName, message);
-        });
-        ErrorResponse error = ErrorResponse.builder()
-        		.timeStamp(LocalDateTime.now())
-                .status(HttpStatus.BAD_REQUEST.value())   // 400
-                .error("Validation Failed")
-                .message("One or more fields are invalid")
-                .fieldErrors(fieldErrors)
-                .build();
-        return ResponseEntity.badRequest().body(error);
-    
-	}
+	public ResponseEntity<ApiResponse<Void>> handleValidationErrors(
+            MethodArgumentNotValidException ex) {
+
+        Map<String, String> fieldErrors = new LinkedHashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+                fieldErrors.put(error.getField(), error.getDefaultMessage())
+        );
+
+        log.warn("Validation failed: {}", fieldErrors);
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.validationError("Validation failed", fieldErrors));
+    }
+
+	
 	
 	@ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
-        ErrorResponse error = ErrorResponse.builder()
-                .timeStamp(LocalDateTime.now())
-                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())   // 500
-                .error("Internal Server Error")
-                .message("Something went wrong. Please try again later.")
-                .build();
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception ex) {
+        log.error("Unexpected error : {} "+ex.getMessage());        
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error("Something went wrong. Please try again later", 500));
     }
+	
+	@ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(
+            IllegalArgumentException ex) {
+        log.warn("Illegal argument: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getMessage(), 400));
+    }
+	
 	@ExceptionHandler(UserNotFoundException.class)
-	public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex) {
-	    ErrorResponse error = ErrorResponse.builder()
-	            .timeStamp(LocalDateTime.now())
-	            .status(HttpStatus.NOT_FOUND.value())
-	            .error("Not Found")
-	            .message(ex.getMessage())
-	            .build();
-	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+	public ResponseEntity<ApiResponse<Void>> handleUserNotFound(UserNotFoundException ex) {
+		log.error("User not found: {} "+ex.getMessage());
+	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage(), 404));
 	}
 
 	@ExceptionHandler(DuplicateEmailException.class)
-	public ResponseEntity<ErrorResponse> handleDuplicateEmail(DuplicateEmailException ex) {
-	    ErrorResponse error = ErrorResponse.builder()
-	            .timeStamp(LocalDateTime.now())
-	            .status(HttpStatus.CONFLICT.value())   // 409 Conflict
-	            .error("Conflict")
-	            .message(ex.getMessage())
-	            .build();
-	    return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+	public ResponseEntity<ApiResponse<Void>> handleDuplicateEmail(DuplicateEmailException ex) {
+		log.warn("Duplicate email: {}", ex.getMessage());
+	    return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage(), 409));
 	}
 }

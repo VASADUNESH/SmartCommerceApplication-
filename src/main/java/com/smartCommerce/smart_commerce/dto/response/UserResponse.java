@@ -4,11 +4,16 @@ import java.time.LocalDateTime;
 
 import com.smartCommerce.smart_commerce.model.enums.UserRoles;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
+
 public class UserResponse {
 	
 	private String id;
@@ -34,6 +39,8 @@ public class UserResponse {
 	
 	@Data
 	@Builder
+	@NoArgsConstructor
+	@AllArgsConstructor
 	public static class AddressResponse {
 		private String street;
 

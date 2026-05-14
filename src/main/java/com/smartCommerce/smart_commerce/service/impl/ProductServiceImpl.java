@@ -4,12 +4,16 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.smartCommerce.smart_commerce.dto.request.ProductRequest;
 import com.smartCommerce.smart_commerce.dto.request.StockUpdateRequest;
+import com.smartCommerce.smart_commerce.dto.response.PagedResponse;
 import com.smartCommerce.smart_commerce.dto.response.ProductResponse;
 import com.smartCommerce.smart_commerce.exception.ProductNotFoundException;
+import com.smartCommerce.smart_commerce.mapper.ProductMapper;
 import com.smartCommerce.smart_commerce.model.Product;
 import com.smartCommerce.smart_commerce.repository.ProductRepository;
 import com.smartCommerce.smart_commerce.service.ProductService;
@@ -26,6 +30,8 @@ public class ProductServiceImpl implements ProductService {
 
 	
 	private final ProductRepository productRepository;
+	
+	private final ProductMapper productMapper;
 
 	@Override
 	public ProductResponse createProduct(ProductRequest productRequest) throws IllegalAccessException {
@@ -35,15 +41,13 @@ public class ProductServiceImpl implements ProductService {
 			throw new IllegalAccessException("Product with name '" + productRequest.getName() + "' already exists");
 		}
 
-		Product product = Product.builder().name(productRequest.getName()).description(productRequest.getDescription())
-				.price(productRequest.getPrice()).category(productRequest.getCategory())
-				.stockQuantity(productRequest.getStockQuantity()).imageUrls(productRequest.getImageUrls())
-				.active(productRequest.getActive()).build();
+		Product product = productMapper.toEntity(productRequest);
 
-		Product savedProduct = productRepository.save(product);
-		log.info("Product created successfully with id: {}", savedProduct.getId());
-		System.out.println("DOne service");
-		return mapToResponse(savedProduct);
+	
+		product.setActive(true);
+		log.info("Product created successfully");
+		
+		return productMapper.toResponse(productRepository.save(product));
 	}
 
 	@Override
@@ -88,21 +92,13 @@ public class ProductServiceImpl implements ProductService {
 		
 		log.info("Updating product by id: {}"+ id);
 		
-		Product updatedProduct = existingProduct.builder()
-				.name(productRequest.getName())
-				.description(productRequest.getDescription())
-				.price(productRequest.getPrice())
-				.category(productRequest.getCategory())
-				.stockQuantity(productRequest.getStockQuantity())
-				.imageUrls(productRequest.getImageUrls())
-				.active(productRequest.getActive())
-				.build();
+		productMapper.updateResponse(productRequest, existingProduct);
 		
-		Product savedProduct = productRepository.save(updatedProduct);
 		
-		log.info("Product updated successfully:{}"+id);
 		
-		return mapToResponse(savedProduct);
+		log.info("Product updated successfully");
+		
+		return productMapper.toResponse(productRepository.save(existingProduct));
 	}
 
 	@Override
@@ -129,6 +125,30 @@ public class ProductServiceImpl implements ProductService {
 		Product product = productRepository.findById(id).orElseThrow(()->new ProductNotFoundException(id));
 		product.setStockQuantity(stockUpdaterequest.getQuantity());
 		return mapToResponse(productRepository.save(product));
+	}
+
+	@Override
+	public PagedResponse<ProductResponse> getAllProductsPaged(Pageable pageable) {
+		log.debug("Fetching products page: {}, size: {}", pageable.getPageNumber(), pageable.getPageSize());
+		
+		Page<ProductResponse> page = productRepository.findByActiveTrue(pageable)
+				.map(this::mapToResponse);
+		
+		return PagedResponse.from(page);
+	}
+
+	@Override
+	public PagedResponse<ProductResponse> getProductsByCategoryPaged(String category, Pageable pageable) {
+		Page<ProductResponse> page = productRepository.findByCategory(category,pageable)
+		.map(this::mapToResponse);
+		return PagedResponse.from(page);
+	}
+
+	@Override
+	public PagedResponse<ProductResponse> searchProductsPaged(String name, Pageable pageable) {
+		Page<ProductResponse> page = productRepository.findByNameContainingIgnoreCase(name, pageable)
+		.map(this::mapToResponse);
+		return PagedResponse.from(page);
 	}
 
 }
